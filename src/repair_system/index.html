@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智慧校园 - 敏捷报修终端</title>
+    <style>
+        /* 移动端极简 UI 设计 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h2 { margin: 0; color: #1e3a8a; font-size: 22px; }
+        .header p { color: #64748b; font-size: 14px; margin-top: 8px; }
+        
+        /* 模拟扫码带出的资产信息 */
+        .asset-card { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 6px; margin-bottom: 25px; }
+        .asset-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px; }
+        .asset-row:last-child { margin-bottom: 0; }
+        .asset-label { color: #64748b; }
+        .asset-value { font-weight: bold; color: #1e293b; }
+
+        /* 故障标签点选区 */
+        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; }
+        .tag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .tag-btn { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px 10px; border-radius: 8px; text-align: center; color: #475569; font-size: 15px; transition: all 0.2s; cursor: pointer; }
+        .tag-btn.active { background: #ebf8ff; border-color: #3b82f6; color: #1d4ed8; font-weight: bold; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1); }
+        
+        /* 补充说明 */
+        textarea { width: 100%; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 14px; margin-bottom: 25px; resize: none; background: #f8fafc; }
+        textarea:focus { outline: none; border-color: #3b82f6; background: #fff; }
+
+        /* 提交按钮 */
+        .submit-btn { width: 100%; background: #3b82f6; color: white; border: none; padding: 16px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        .submit-btn:hover { background: #2563eb; }
+        
+        /* 模拟遮罩层弹窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; text-align: center; width: 80%; max-width: 300px; }
+        .modal-icon { font-size: 40px; color: #10b981; margin-bottom: 15px; }
+        .modal-text { font-size: 18px; font-weight: bold; color: #1f2937; margin-bottom: 10px; }
+        .modal-subtext { font-size: 14px; color: #6b7280; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>扫码极速报修</h2>
+        <p>讯飞智慧校园 · 设备维保服务</p>
+    </div>
+
+    <div class="asset-card">
+        <div class="asset-row">
+            <span class="asset-label">当前位置</span>
+            <span class="asset-value" id="locationData">南区主楼 302教室</span>
+        </div>
+        <div class="asset-row">
+            <span class="asset-label">设备类型</span>
+            <span class="asset-value">交互式电子白板</span>
+        </div>
+        <div class="asset-row">
+            <span class="asset-label">资产编号</span>
+            <span class="asset-value">ID-8842-XF</span>
+        </div>
+    </div>
+
+    <div class="section-title">快速选择故障类型（单选/多选）</div>
+    <div class="tag-grid" id="faultTags">
+        <div class="tag-btn" onclick="toggleTag(this)">屏幕黑屏/不亮</div>
+        <div class="tag-btn" onclick="toggleTag(this)">触摸无反应</div>
+        <div class="tag-btn" onclick="toggleTag(this)">扬声器无声音</div>
+        <div class="tag-btn" onclick="toggleTag(this)">升降卡滞</div>
+        <div class="tag-btn" onclick="toggleTag(this)">系统死机卡顿</div>
+        <div class="tag-btn" onclick="toggleTag(this)">网络连接失败</div>
+    </div>
+
+    <div class="section-title">补充描述（选填）</div>
+    <textarea rows="3" placeholder="例如：重启后依然无法解决..."></textarea>
+
+    <button class="submit-btn" onclick="submitRepair()">一键提交报修工单</button>
+</div>
+
+<div class="modal" id="successModal">
+    <div class="modal-content">
+        <div class="modal-icon">✔</div>
+        <div class="modal-text">报修已成功提交</div>
+        <div class="modal-subtext" id="dispatchInfo">系统已秒级派单至: 张工 (138****1234)<br>预计 5 分钟内到达现场</div>
+    </div>
+</div>
+
+<script>
+    // 简单的 JS 逻辑：点击按钮变色，模拟选中
+    function toggleTag(element) {
+        element.classList.toggle('active');
+    }
+
+    // 提交动作模拟
+    function submitRepair() {
+        const activeTags = document.querySelectorAll('.tag-btn.active');
+        if(activeTags.length === 0) {
+            alert('请至少选择一项故障类型！');
+            return;
+        }
+        
+        // 模拟向后端发送数据并弹出成功提示
+        document.getElementById('successModal').style.display = 'flex';
+        
+        // 模拟用完即走，3秒后自动关闭页面/刷新
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+    }
+</script>
+
+</body>
+</html>
