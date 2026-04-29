@@ -84,10 +84,31 @@
     function toggleTag(el) { el.classList.toggle('active'); }
 
     function submitRepair() {
+        const activeTags = document.querySelectorAll('.tag-btn.active');
+        const faultList = Array.from(activeTags).map(t => t.innerText);
+        
+        if(faultList.length === 0) { alert('请至少选择一项故障类型！'); return; }
+
         const data = getUrlParams();
-        document.getElementById('confirmMsg').innerText = `已为 ${data.room} 派单，请稍候。`;
-        document.getElementById('successModal').style.display = 'flex';
-        setTimeout(() => { location.reload(); }, 2500);
+        const reportData = {
+            room: decodeURIComponent(data.room),
+            asset_id: data.id,
+            faults: faultList,
+            timestamp: new Date().toLocaleString()
+        };
+
+    
+        const webhookURL =https://webhook.site/c62361c8-0c57-42af-989e-8e7f11b12565;
+
+        fetch(webhookURL, {
+            method: 'POST',
+            mode: 'no-cors', // 简单演示模式
+            body: JSON.stringify(reportData)
+        }).then(() => {
+            document.getElementById('confirmMsg').innerText = `已为 ${reportData.room} 秒级派单！`;
+            document.getElementById('successModal').style.display = 'flex';
+            setTimeout(() => { location.reload(); }, 2500);
+        });
     }
 </script>
 
