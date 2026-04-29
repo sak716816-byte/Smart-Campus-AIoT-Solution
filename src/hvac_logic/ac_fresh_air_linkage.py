@@ -1,8 +1,7 @@
-# 智慧教学楼暖通感知与联动逻辑核心片段 (Python)
 import time
 from pymodbus.client import ModbusSerialClient
 
-# 初始化 RS485 客户端 (连接底层的边缘网关)
+# 初始化 RS485 客户端 
 client = ModbusSerialClient(method='rtu', port='/dev/ttyUSB0', baudrate=9600)
 
 def intelligent_control_loop():
@@ -17,7 +16,7 @@ def intelligent_control_loop():
             
             print(f"[数据采集] 当前教室 - 温度: {temp}°C, CO2: {co2_val}ppm")
 
-            # 2. 核心联动决策逻辑 (前馈与补偿)
+            # 2. 前馈与补偿
             if co2_val > 1000:
                 print(">>> [联动预警] CO2超标！人员密度过大，即将导致疲劳。")
                 print(">>> [动作执行] 正在启动新风机组进行强排换气...")
